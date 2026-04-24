@@ -28,7 +28,7 @@ import {
   editflight,
   edithotel,
   getuserbyemail,
-} from "@/api";
+} from "../../lib/api";
 import HotelList from "@/components/Hotel/Hotel";
 const mockFlights = [
   {
