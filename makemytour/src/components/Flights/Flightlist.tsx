@@ -10,29 +10,40 @@ import { Button } from "../ui/button";
 import { useEffect, useState } from "react";
 import { getflight } from "../../lib/api";
 import Loader from "../Loader";
-const FlightList = ({ onSelect }: any) => {
+
+interface FlightListProps {
+  onSelect: (flight: any) => void;
+}
+
+const FlightList = ({ onSelect }: FlightListProps) => {
   const [flight, setflight] = useState<any[]>([]);
   const [loading, setloading] = useState(true);
+
   useEffect(() => {
     const fetchflight = async () => {
       try {
-        const data = await getflight();
-        setflight(data);
+        const response = await getflight();
+
+        // Fix: use response.data instead of full axios response
+        setflight(response.data || []);
       } catch (error) {
         console.error(error);
       } finally {
         setloading(false);
       }
     };
+
     fetchflight();
   }, []);
-  
+
   if (loading) {
     return <Loader />;
   }
+
   return (
     <div>
       <h3 className="text-lg font-semibold mb-2">Flight List</h3>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -42,21 +53,24 @@ const FlightList = ({ onSelect }: any) => {
             <TableHead>Action</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {flight.length > 0 ? (
-            flight?.map((flight: any) => (
-              <TableRow key={flight._id}>
-                <TableCell>{flight.flightName}</TableCell>
-                <TableCell>{flight.from}</TableCell>
-                <TableCell>{flight.to}</TableCell>
+            flight.map((item: any) => (
+              <TableRow key={item._id}>
+                <TableCell>{item.flightName}</TableCell>
+                <TableCell>{item.from}</TableCell>
+                <TableCell>{item.to}</TableCell>
                 <TableCell>
-                  <Button onClick={() => onSelect(flight)}>Edit</Button>
+                  <Button onClick={() => onSelect(item)}>
+                    Edit
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell>No data</TableCell>
+              <TableCell colSpan={4}>No data</TableCell>
             </TableRow>
           )}
         </TableBody>
@@ -64,4 +78,5 @@ const FlightList = ({ onSelect }: any) => {
     </div>
   );
 };
+
 export default FlightList;
