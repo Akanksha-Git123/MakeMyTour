@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
-import { ReactNode } from "react";
-import { Toaster } from "react-hot-toast";
+import type { Metadata } from "./next";
+import { ReactNode } from "./react";
+import { Toaster } from "./react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Make My Tour",
