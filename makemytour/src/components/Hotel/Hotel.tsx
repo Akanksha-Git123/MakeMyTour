@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
 import { useEffect, useState } from "react";
-import { gethotel } from "@/api";
+import { gethotel } from "../../lib/api";
 import Loader from "../Loader";
 
 const HotelList = ({ onSelect }: any) => {

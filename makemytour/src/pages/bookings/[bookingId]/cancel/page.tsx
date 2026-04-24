@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cancelBooking } from "@/api/index";
+import { cancelBooking } from "../../lib/api";
 
 export default function CancelBooking({ params }) {
   const { bookingId } = params;

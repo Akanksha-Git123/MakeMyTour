@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "../ui/button";
 import { useEffect, useState } from "react";
-import { getflight } from "@/api";
+import { getflight } from "../../lib/api";
 import Loader from "../Loader";
 const FlightList = ({ onSelect }: any) => {
   const [flight, setflight] = useState<any[]>([]);
