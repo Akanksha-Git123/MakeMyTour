@@ -11,53 +11,66 @@ import { useEffect, useState } from "react";
 import { gethotel } from "../../lib/api";
 import Loader from "../Loader";
 
-const HotelList = ({ onSelect }: any) => {
+interface HotelProps {
+  onSelect: (hotel: any) => void;
+}
+
+const Hotel = ({ onSelect }: HotelProps) => {
   const [hotel, sethotel] = useState<any[]>([]);
   const [loading, setloading] = useState(true);
+
   useEffect(() => {
     const fetchhotel = async () => {
       try {
-        const data = await gethotel();
-        sethotel(data);
+        const response = await gethotel();
+
+        // Fix here
+        sethotel(response.data || []);
       } catch (error) {
         console.error(error);
       } finally {
         setloading(false);
       }
     };
+
     fetchhotel();
   }, []);
-  
+
   if (loading) {
     return <Loader />;
   }
+
   return (
     <div>
       <h3 className="text-lg font-semibold mb-2">Hotel List</h3>
+
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Hotel Name</TableHead>
             <TableHead>Location</TableHead>
-            <TableHead>Price/Night</TableHead>
+            <TableHead>Price</TableHead>
             <TableHead>Action</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {hotel.length > 0 ? (
-            hotel.map((hotel: any) => (
-              <TableRow key={hotel._id}>
-                <TableCell>{hotel.hotelName}</TableCell>
-                <TableCell>{hotel.location}</TableCell>
-                <TableCell>${hotel.pricePerNight}</TableCell>
+            hotel.map((item: any) => (
+              <TableRow key={item._id}>
+                <TableCell>{item.hotelName}</TableCell>
+                <TableCell>{item.location}</TableCell>
+                <TableCell>{item.price}</TableCell>
                 <TableCell>
-                  <Button onClick={() => onSelect(hotel)}>Edit</Button>
+                  <Button onClick={() => onSelect(item)}>
+                    Edit
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell>No data</TableCell>
+              <TableCell colSpan={4}>No data</TableCell>
             </TableRow>
           )}
         </TableBody>
@@ -65,4 +78,5 @@ const HotelList = ({ onSelect }: any) => {
     </div>
   );
 };
-export default HotelList;
+
+export default Hotel;
