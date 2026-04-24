@@ -2,7 +2,27 @@
 
 import { motion } from "framer-motion";
 
-export default function BookingCard({ booking, onCancel }) {
+interface Booking {
+  id: string;
+  flightId: string;
+  fromCity: string;
+  toCity: string;
+  airline?: string;
+  bookingAmount: number;
+  cancelled: boolean;
+  refundAmount?: number;
+  refundStatus?: string;
+}
+
+interface BookingCardProps {
+  booking: Booking;
+  onCancel: (id: string) => void;
+}
+
+export default function BookingCard({
+  booking,
+  onCancel,
+}: BookingCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -16,6 +36,7 @@ export default function BookingCard({ booking, onCancel }) {
           <h2 className="text-lg font-semibold">
             {booking.fromCity} → {booking.toCity}
           </h2>
+
           <p className="text-gray-500 text-sm">
             {booking.airline || "Airline not available"}
           </p>
@@ -35,6 +56,7 @@ export default function BookingCard({ booking, onCancel }) {
       {/* INFO */}
       <div className="flex justify-between text-sm text-gray-600 mb-3">
         <p>Flight ID: {booking.flightId}</p>
+
         <p className="font-semibold text-black">
           ₹{booking.bookingAmount}
         </p>
@@ -63,7 +85,7 @@ export default function BookingCard({ booking, onCancel }) {
             </span>
           </p>
 
-          {/* ✅ PROGRESS BAR */}
+          {/* Progress Bar */}
           <div className="mt-3">
             <div className="flex justify-between text-xs text-gray-500 mb-1">
               <span>Requested</span>
