@@ -184,3 +184,46 @@ export async function sendNotification(userId: string, message: string) {
 export async function triggerFlightUpdates(flightId: string) {
   return getLiveStatus(flightId);
 }
+
+
+
+import axios from "axios";
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+const api = axios.create({
+  baseURL: API_URL,
+});
+
+export default api;
+
+
+// Flights
+export const getflight = () => api.get("/flights");
+
+export const addflight = (data: any) =>
+  api.post("/flights", data);
+
+export const editflight = (id: string, data: any) =>
+  api.put(`/flights/${id}`, data);
+
+
+// Hotels
+export const gethotel = () => api.get("/hotels");
+
+export const addhotel = (data: any) =>
+  api.post("/hotels", data);
+
+export const edithotel = (id: string, data: any) =>
+  api.put(`/hotels/${id}`, data);
+
+
+// Users
+export const getuserbyemail = (email: string) =>
+  api.get(`/users/${email}`);
+
+
+// Seats
+export const getSeatsByFlight = (flightId: string) =>
+  api.get(`/seats/${flightId}`);
