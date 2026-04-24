@@ -1,29 +1,18 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-import { Textarea } from "@/components/ui/textarea";
-import FlightList from "@/components/Flights/Flightlist";
-import HotelList from "@/components/Hotel/Hotel";
-
-import {
+  getflight,
+  gethotel,
+  getuserbyemail,
   addflight,
-  addhotel,
   editflight,
+  addhotel,
   edithotel,
-  getUserByEmail,
 } from "../../lib/api";
+
+import FlightList from "../../components/Flights/Flightlist";
+import HotelList from "../../components/Hotel/Hotel";
 
 interface User {
   _id: string;
@@ -31,54 +20,10 @@ interface User {
   lastName: string;
   email: string;
   role: string;
-  phoneNumber: string;
-}
-
-function UserSearch() {
-  const [email, setEmail] = useState("");
-  const [user, setUser] = useState<User | null>(null);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await getUserByEmail(email);
-      const userData = response.data || response;
-      setUser(userData);
-    } catch (error) {
-      console.log(error);
-      alert("User not found");
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <Input
-          type="email"
-          placeholder="Search user by email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Button type="submit">Search</Button>
-      </form>
-
-      {user && (
-        <div className="border p-4 rounded-md">
-          <h3 className="font-bold mb-2">User Details</h3>
-          <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Role:</strong> {user.role}</p>
-          <p><strong>Phone:</strong> {user.phoneNumber}</p>
-        </div>
-      )}
-    </div>
-  );
 }
 
 interface Hotel {
-  id?: string;
+  _id?: string;
   hotelName: string;
   location: string;
   pricePerNight: number;
@@ -86,112 +31,8 @@ interface Hotel {
   amenities: string;
 }
 
-function AddEditHotel({ hotel }: { hotel: Hotel | null }) {
-  const [formData, setFormData] = useState<Hotel>({
-    hotelName: "",
-    location: "",
-    pricePerNight: 0,
-    availableRooms: 0,
-    amenities: "",
-  });
-
-  useEffect(() => {
-    if (hotel) {
-      setFormData(hotel);
-    }
-  }, [hotel]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "pricePerNight" || name === "availableRooms"
-          ? Number(value)
-          : value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      if (hotel?.id) {
-        await edithotel(hotel.id, formData);
-      } else {
-        await addhotel(formData);
-      }
-
-      alert("Hotel saved successfully");
-
-      setFormData({
-        hotelName: "",
-        location: "",
-        pricePerNight: 0,
-        availableRooms: 0,
-        amenities: "",
-      });
-    } catch (error) {
-      console.log(error);
-      alert("Error saving hotel");
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-lg font-semibold">
-        {hotel ? "Edit Hotel" : "Add Hotel"}
-      </h3>
-
-      <Input
-        name="hotelName"
-        placeholder="Hotel Name"
-        value={formData.hotelName}
-        onChange={handleChange}
-      />
-
-      <Input
-        name="location"
-        placeholder="Location"
-        value={formData.location}
-        onChange={handleChange}
-      />
-
-      <Input
-        name="pricePerNight"
-        type="number"
-        placeholder="Price Per Night"
-        value={formData.pricePerNight}
-        onChange={handleChange}
-      />
-
-      <Input
-        name="availableRooms"
-        type="number"
-        placeholder="Available Rooms"
-        value={formData.availableRooms}
-        onChange={handleChange}
-      />
-
-      <Textarea
-        name="amenities"
-        placeholder="Amenities"
-        value={formData.amenities}
-        onChange={handleChange}
-      />
-
-      <Button type="submit">
-        {hotel ? "Update Hotel" : "Add Hotel"}
-      </Button>
-    </form>
-  );
-}
-
 interface Flight {
-  id?: string;
+  _id?: string;
   flightName: string;
   from: string;
   to: string;
@@ -201,8 +42,22 @@ interface Flight {
   availableSeats: number;
 }
 
-function AddEditFlight({ flight }: { flight: Flight | null }) {
-  const [formData, setFormData] = useState<Flight>({
+export default function AdminDashboard() {
+  const [email, setEmail] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+
+  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+
+  const [hotelForm, setHotelForm] = useState<Hotel>({
+    hotelName: "",
+    location: "",
+    pricePerNight: 0,
+    availableRooms: 0,
+    amenities: "",
+  });
+
+  const [flightForm, setFlightForm] = useState<Flight>({
     flightName: "",
     from: "",
     to: "",
@@ -213,36 +68,70 @@ function AddEditFlight({ flight }: { flight: Flight | null }) {
   });
 
   useEffect(() => {
-    if (flight) {
-      setFormData(flight);
+    if (selectedHotel) {
+      setHotelForm(selectedHotel);
     }
-  }, [flight]);
+  }, [selectedHotel]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  useEffect(() => {
+    if (selectedFlight) {
+      setFlightForm(selectedFlight);
+    }
+  }, [selectedFlight]);
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "price" || name === "availableSeats"
-          ? Number(value)
-          : value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Search User
+  const handleSearchUser = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      if (flight?.id) {
-        await editflight(flight.id, formData);
+      const response = await getuserbyemail(email);
+      setUser(response.data);
+    } catch (error) {
+      console.log(error);
+      alert("User not found");
+    }
+  };
+
+  // Hotel Submit
+  const handleHotelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (selectedHotel?._id) {
+        await edithotel(selectedHotel._id, hotelForm);
+        alert("Hotel updated successfully");
       } else {
-        await addflight(formData);
+        await addhotel(hotelForm);
+        alert("Hotel added successfully");
       }
 
-      alert("Flight saved successfully");
+      setHotelForm({
+        hotelName: "",
+        location: "",
+        pricePerNight: 0,
+        availableRooms: 0,
+        amenities: "",
+      });
+    } catch (error) {
+      console.log(error);
+      alert("Hotel operation failed");
+    }
+  };
 
-      setFormData({
+  // Flight Submit
+  const handleFlightSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (selectedFlight?._id) {
+        await editflight(selectedFlight._id, flightForm);
+        alert("Flight updated successfully");
+      } else {
+        await addflight(flightForm);
+        alert("Flight added successfully");
+      }
+
+      setFlightForm({
         flightName: "",
         from: "",
         to: "",
@@ -253,137 +142,196 @@ function AddEditFlight({ flight }: { flight: Flight | null }) {
       });
     } catch (error) {
       console.log(error);
-      alert("Error saving flight");
+      alert("Flight operation failed");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-lg font-semibold">
-        {flight ? "Edit Flight" : "Add Flight"}
-      </h3>
+    <div style={{ padding: "20px" }}>
+      <h1>Admin Dashboard</h1>
 
-      <Input
-        name="flightName"
-        placeholder="Flight Name"
-        value={formData.flightName}
-        onChange={handleChange}
-      />
+      {/* User Search */}
+      <div style={{ marginBottom: "30px" }}>
+        <h2>Search User</h2>
+        <form onSubmit={handleSearchUser}>
+          <input
+            type="email"
+            placeholder="Enter email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <button type="submit">Search</button>
+        </form>
 
-      <Input
-        name="from"
-        placeholder="From"
-        value={formData.from}
-        onChange={handleChange}
-      />
+        {user && (
+          <div>
+            <p>Name: {user.firstName} {user.lastName}</p>
+            <p>Email: {user.email}</p>
+            <p>Role: {user.role}</p>
+          </div>
+        )}
+      </div>
 
-      <Input
-        name="to"
-        placeholder="To"
-        value={formData.to}
-        onChange={handleChange}
-      />
+      {/* Hotel Section */}
+      <div style={{ marginBottom: "30px" }}>
+        <h2>Manage Hotels</h2>
 
-      <Input
-        name="departureTime"
-        type="datetime-local"
-        value={formData.departureTime}
-        onChange={handleChange}
-      />
+        <HotelList onSelect={setSelectedHotel} />
 
-      <Input
-        name="arrivalTime"
-        type="datetime-local"
-        value={formData.arrivalTime}
-        onChange={handleChange}
-      />
+        <form onSubmit={handleHotelSubmit}>
+          <input
+            type="text"
+            placeholder="Hotel Name"
+            value={hotelForm.hotelName}
+            onChange={(e) =>
+              setHotelForm({ ...hotelForm, hotelName: e.target.value })
+            }
+          />
 
-      <Input
-        name="price"
-        type="number"
-        placeholder="Price"
-        value={formData.price}
-        onChange={handleChange}
-      />
+          <input
+            type="text"
+            placeholder="Location"
+            value={hotelForm.location}
+            onChange={(e) =>
+              setHotelForm({ ...hotelForm, location: e.target.value })
+            }
+          />
 
-      <Input
-        name="availableSeats"
-        type="number"
-        placeholder="Available Seats"
-        value={formData.availableSeats}
-        onChange={handleChange}
-      />
+          <input
+            type="number"
+            placeholder="Price"
+            value={hotelForm.pricePerNight}
+            onChange={(e) =>
+              setHotelForm({
+                ...hotelForm,
+                pricePerNight: Number(e.target.value),
+              })
+            }
+          />
 
-      <Button type="submit">
-        {flight ? "Update Flight" : "Add Flight"}
-      </Button>
-    </form>
-  );
-}
+          <input
+            type="number"
+            placeholder="Rooms"
+            value={hotelForm.availableRooms}
+            onChange={(e) =>
+              setHotelForm({
+                ...hotelForm,
+                availableRooms: Number(e.target.value),
+              })
+            }
+          />
 
-export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("flights");
-  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
-  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+          <textarea
+            placeholder="Amenities"
+            value={hotelForm.amenities}
+            onChange={(e) =>
+              setHotelForm({
+                ...hotelForm,
+                amenities: e.target.value,
+              })
+            }
+          />
 
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+          <button type="submit">
+            {selectedHotel ? "Update Hotel" : "Add Hotel"}
+          </button>
+        </form>
+      </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="flights">Flights</TabsTrigger>
-          <TabsTrigger value="hotels">Hotels</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-        </TabsList>
+      {/* Flight Section */}
+      <div>
+        <h2>Manage Flights</h2>
 
-        <TabsContent value="flights">
-          <Card>
-            <CardHeader>
-              <CardTitle>Manage Flights</CardTitle>
-              <CardDescription>
-                Add/Edit flights here
-              </CardDescription>
-            </CardHeader>
+        <FlightList onSelect={setSelectedFlight} />
 
-            <CardContent className="grid grid-cols-2 gap-4">
-              <FlightList onSelect={setSelectedFlight} />
-              <AddEditFlight flight={selectedFlight} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <form onSubmit={handleFlightSubmit}>
+          <input
+            type="text"
+            placeholder="Flight Name"
+            value={flightForm.flightName}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                flightName: e.target.value,
+              })
+            }
+          />
 
-        <TabsContent value="hotels">
-          <Card>
-            <CardHeader>
-              <CardTitle>Manage Hotels</CardTitle>
-              <CardDescription>
-                Add/Edit hotels here
-              </CardDescription>
-            </CardHeader>
+          <input
+            type="text"
+            placeholder="From"
+            value={flightForm.from}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                from: e.target.value,
+              })
+            }
+          />
 
-            <CardContent className="grid grid-cols-2 gap-4">
-              <HotelList onSelect={setSelectedHotel} />
-              <AddEditHotel hotel={selectedHotel} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <input
+            type="text"
+            placeholder="To"
+            value={flightForm.to}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                to: e.target.value,
+              })
+            }
+          />
 
-        <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Search users by email
-              </CardDescription>
-            </CardHeader>
+          <input
+            type="datetime-local"
+            value={flightForm.departureTime}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                departureTime: e.target.value,
+              })
+            }
+          />
 
-            <CardContent>
-              <UserSearch />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <input
+            type="datetime-local"
+            value={flightForm.arrivalTime}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                arrivalTime: e.target.value,
+              })
+            }
+          />
+
+          <input
+            type="number"
+            placeholder="Price"
+            value={flightForm.price}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                price: Number(e.target.value),
+              })
+            }
+          />
+
+          <input
+            type="number"
+            placeholder="Seats"
+            value={flightForm.availableSeats}
+            onChange={(e) =>
+              setFlightForm({
+                ...flightForm,
+                availableSeats: Number(e.target.value),
+              })
+            }
+          />
+
+          <button type="submit">
+            {selectedFlight ? "Update Flight" : "Add Flight"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
