@@ -15,7 +15,7 @@ import {
   CreditCard,
   Shield,
   BedDouble,
-  Bell
+  Bell,
 } from "lucide-react";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -39,35 +39,46 @@ const Navbar = () => {
   const user = useSelector((state: any) => state.user.user);
   const router = useRouter();
 
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
-  const logout = () => dispatch(clearUser());
+  const logout = () => {
+    dispatch(clearUser());
+    localStorage.removeItem("user");
+    router.push("/");
+  };
 
-  // ✅ Dynamic notifications
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("user"));
+        // FIXED NULL ISSUE
+        const storedUser = localStorage.getItem("user");
+
+        if (!storedUser) return;
+
+        const userData = JSON.parse(storedUser);
+
         if (!userData?.id) return;
 
-        const data = await getNotifications(userData.id);
-        setNotifications(data || []);
-      } catch (e) {
-        console.log(e);
+        const response = await getNotifications(userData.id);
+
+        setNotifications(response?.data || []);
+      } catch (error) {
+        console.log(error);
       }
     };
 
     fetchData();
+
     const interval = setInterval(fetchData, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
   return (
     <>
-      {/* 🔷 TOP BAR (LOGO + NOTIFICATION + USER) */}
+      {/* Top Navbar */}
       <div className="bg-white shadow-sm py-3 px-6 flex items-center justify-between">
-
-        {/* LOGO */}
+        {/* Logo */}
         <div
           className="flex items-center space-x-2 cursor-pointer"
           onClick={() => router.push("/")}
@@ -76,10 +87,9 @@ const Navbar = () => {
           <span className="text-2xl font-bold text-black">MakeMyTour</span>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* Right Side */}
         <div className="flex items-center gap-4">
-
-          {/* 🔔 NOTIFICATION */}
+          {/* Notifications */}
           <div
             className="relative cursor-pointer"
             onClick={() => router.push("/notifications")}
@@ -93,7 +103,7 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* USER MENU */}
+          {/* User Menu */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -114,12 +124,16 @@ const Navbar = () => {
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem onClick={() => router.push("/profile")}>
-                  <User className="w-4 h-4 mr-2" /> Profile
+                <DropdownMenuItem
+                  onClick={() => router.push("/profile")}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={logout}>
-                  <LogOut className="w-4 h-4 mr-2" /> Logout
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -135,10 +149,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* 🔷 MAIN NAVBAR (NO SCROLL, WRAPS CLEANLY) */}
+      {/* Main Navbar */}
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex flex-wrap justify-center gap-3">
-
           <Button variant="ghost" onClick={() => router.push("/flights")}>
             <Plane className="w-4 h-4 mr-1" /> Flights
           </Button>
@@ -178,7 +191,6 @@ const Navbar = () => {
           <Button variant="ghost" onClick={() => router.push("/insurance")}>
             <Shield className="w-4 h-4 mr-1" /> Insurance
           </Button>
-
         </div>
       </header>
     </>
